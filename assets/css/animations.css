@@ -1,0 +1,141 @@
+/* ============================================================
+   CINEVA — Animations & Micro-interactions
+   ============================================================ */
+
+/* ---------- Keyframes ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(10px) scale(0.96); }
+}
+
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+@keyframes ripple {
+  to { transform: scale(3.2); opacity: 0; }
+}
+
+@keyframes heroKenBurns {
+  from { transform: scale(1.06) translateX(0); }
+  to { transform: scale(1.12) translateX(-1.5%); }
+}
+
+@keyframes bootPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes bootSlide {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(420%); }
+}
+
+@keyframes spinLoad {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Scroll reveal (IntersectionObserver) ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  will-change: opacity, transform;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Stagger children in rails */
+.reveal-stagger > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.reveal-stagger.in-view > * { opacity: 1; transform: translateY(0); }
+.reveal-stagger.in-view > *:nth-child(1) { transition-delay: 0.02s; }
+.reveal-stagger.in-view > *:nth-child(2) { transition-delay: 0.07s; }
+.reveal-stagger.in-view > *:nth-child(3) { transition-delay: 0.12s; }
+.reveal-stagger.in-view > *:nth-child(4) { transition-delay: 0.17s; }
+.reveal-stagger.in-view > *:nth-child(5) { transition-delay: 0.22s; }
+.reveal-stagger.in-view > *:nth-child(6) { transition-delay: 0.27s; }
+.reveal-stagger.in-view > *:nth-child(n+7) { transition-delay: 0.32s; }
+
+/* ---------- Page transition ---------- */
+.page-fade { animation: fadeIn 0.45s var(--ease); }
+body.page-leaving main,
+body.page-leaving .site-footer { opacity: 0; transform: translateY(-8px); transition: opacity 0.22s ease, transform 0.22s ease; }
+
+/* ---------- Hero content entrance ---------- */
+.hero-content > * {
+  opacity: 0;
+  animation: fadeSlideUp 0.8s var(--ease) forwards;
+}
+.hero-content > *:nth-child(1) { animation-delay: 0.1s; }
+.hero-content > *:nth-child(2) { animation-delay: 0.2s; }
+.hero-content > *:nth-child(3) { animation-delay: 0.3s; }
+.hero-content > *:nth-child(4) { animation-delay: 0.4s; }
+.hero-content > *:nth-child(5) { animation-delay: 0.5s; }
+.hero-content > *:nth-child(6) { animation-delay: 0.6s; }
+.hero.switching .hero-content > * { animation: none; opacity: 0; }
+
+/* ---------- Magnetic button (JS sets --mx / --my) ---------- */
+.magnetic {
+  transform: translate(var(--mx, 0), var(--my, 0));
+  transition: transform 0.25s var(--ease);
+}
+
+/* ---------- Image lazy fade-in ---------- */
+img.lazy-img { opacity: 0; transition: opacity 0.5s var(--ease); }
+img.lazy-img.loaded { opacity: 1; }
+
+/* ---------- Glow pulse for featured badge ---------- */
+.badge-new { animation: badgePulse 2.4s ease-in-out infinite; }
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(226, 53, 79, 0.35); }
+  50% { box-shadow: 0 0 22px rgba(226, 53, 79, 0.65); }
+}
+
+/* ---------- Spinner ---------- */
+.spinner {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--crimson);
+  animation: spinLoad 0.8s linear infinite;
+  margin: var(--sp-7) auto;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .hero-bg img { animation: none; }
+  .reveal, .reveal-stagger > * { opacity: 1; transform: none; }
+  .hero-content > * { opacity: 1; animation: none; }
+}

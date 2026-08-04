@@ -1,0 +1,190 @@
+/* ============================================================
+   CINEVA — Responsive Styles
+   Mobile-first adjustments for tablet & phone
+   ============================================================ */
+
+/* ---------- ≤ 1200px ---------- */
+@media (max-width: 1200px) {
+  .detail-body { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------- ≤ 1024px : tablet ---------- */
+@media (max-width: 1024px) {
+  .main-nav { display: none; }
+  .hamburger {
+    display: inline-flex;
+  }
+  .header-search input { width: 170px; }
+  .header-search input:focus { width: 220px; }
+
+  .admin-sidebar { width: 68px; padding-inline: var(--sp-2); }
+  .admin-sidebar .logo span:not(.logo-mark) { display: none; }
+  .admin-nav-btn span { display: none; }
+  .admin-nav-btn { justify-content: center; padding: 0.8rem 0; }
+
+  .detail-layout { gap: var(--sp-5); }
+  .rail-arrow { display: none; }
+}
+
+/* ---------- ≤ 768px : mobile ---------- */
+@media (max-width: 768px) {
+  :root { --header-h: 60px; }
+
+  body { padding-bottom: 68px; } /* space for bottom nav */
+  .bottom-nav { display: block; }
+
+  .logo { font-size: 1.3rem; }
+  .logo-mark { width: 28px; height: 28px; font-size: 0.75rem; }
+
+  /* Header: thu gọn — chỉ logo, search icon, avatar, hamburger */
+  .header-inner { gap: var(--sp-3); }
+  .header-search { position: static; }
+  .header-search input {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: var(--gutter); right: var(--gutter);
+    width: auto;
+    display: none;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-lift);
+  }
+  .header-search.mobile-open input { display: block; }
+  .header-search.mobile-open input:focus { width: auto; }
+  .header-search .search-ico { display: none; }
+  .search-suggest { left: var(--gutter); right: var(--gutter); width: auto; top: calc(100% + 56px); }
+  .mobile-search-toggle { display: inline-flex; }
+
+  /* Hero mobile: căn giữa, gọn hơn */
+  .hero { min-height: 78vh; }
+  .hero::after {
+    background:
+      linear-gradient(to top, var(--bg-0) 6%, rgba(5,5,5,0.65) 50%, rgba(5,5,5,0.3) 100%);
+  }
+  .hero-content {
+    max-width: 100%;
+    text-align: center;
+    padding-bottom: 3.4rem;
+  }
+  .hero-eyebrow { justify-content: center; }
+  .hero-meta { justify-content: center; font-size: 0.82rem; }
+  .hero-desc { -webkit-line-clamp: 2; font-size: 0.92rem; margin-inline: auto; }
+  .hero-actions { justify-content: center; }
+  .hero-actions .btn { padding: 0.75rem 1.3rem; font-size: 0.88rem; }
+  .hero-genres { justify-content: center; }
+  .hero-dots { flex-direction: row; right: 50%; transform: translateX(50%); bottom: 1.1rem; }
+  .hero-dots button { width: 22px; height: 4px; }
+  .hero-dots button.active { width: 36px; height: 4px; }
+
+  /* Cards */
+  .movie-card { width: clamp(132px, 38vw, 165px); }
+  .sk-card { width: clamp(132px, 38vw, 165px); }
+  .movie-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-4) var(--sp-3); }
+  .card-overlay { opacity: 0; } /* touch: dùng tap để mở chi tiết */
+
+  /* Sections */
+  .section-head { margin-bottom: var(--sp-4); }
+  .rail { gap: var(--sp-3); padding-bottom: 14px; }
+
+  /* Detail */
+  .detail-hero { min-height: auto; }
+  .detail-layout {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-top: calc(var(--header-h) + 2rem);
+  }
+  .detail-poster { width: clamp(160px, 45vw, 220px); }
+  .detail-info .hero-meta, .detail-info .hero-genres, .detail-info .hero-actions { justify-content: center; }
+  .info-list .row { grid-template-columns: 96px 1fr; text-align: left; }
+
+  /* Player */
+  .watch-layout { padding-top: calc(var(--header-h) + 0.75rem); }
+  .player-shell { border-radius: var(--r-md); }
+  .player-top { padding: var(--sp-3); }
+  .player-top h1 { font-size: 0.9rem; }
+  .player-bottom { padding: 0 var(--sp-3) var(--sp-2); }
+  .pc-btn { width: 38px; height: 38px; font-size: 0.95rem; }
+  .big-play { width: 64px; height: 64px; font-size: 1.3rem; }
+  .volume-wrap:hover .volume-slider { width: 0; } /* ẩn volume slider trên mobile */
+  .pc-btn.only-desktop { display: none; }
+  .episode-grid { grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); }
+
+  /* Filter */
+  .filter-bar { padding: var(--sp-4); border-radius: var(--r-lg); }
+  .filter-group { min-width: calc(50% - var(--sp-4)); }
+  .filter-actions { width: 100%; }
+  .filter-actions .btn { flex: 1; }
+
+  /* Profile */
+  .profile-head { flex-direction: column; text-align: center; }
+  .profile-stats { margin-inline: auto; }
+
+  /* History */
+  .history-row img { width: 48px; height: 70px; }
+  .h-actions { flex-direction: column; }
+
+  /* Footer */
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-bottom { justify-content: center; text-align: center; }
+
+  /* Admin */
+  .admin-layout { flex-direction: column; }
+  .admin-sidebar {
+    width: 100%; height: auto;
+    position: fixed; top: auto; bottom: 0; left: 0; right: 0;
+    z-index: 150;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.4rem;
+    border-right: none;
+    border-top: 1px solid var(--glass-border);
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+  }
+  .admin-sidebar .logo, .admin-sidebar .sidebar-footer { display: none; }
+  .admin-nav-btn { width: auto; flex-direction: column; gap: 2px; font-size: 0.6rem; padding: 0.45rem 0.7rem; }
+  .admin-nav-btn span { display: block; }
+  .admin-nav-btn.active { border-left: none; border-radius: var(--r-md); }
+  .admin-main { padding: var(--sp-4); padding-bottom: 96px; }
+
+  /* Toast trên bottom-nav */
+  .toast-stack { bottom: calc(env(safe-area-inset-bottom, 0px) + 86px); }
+
+  /* Modal */
+  .modal { padding: var(--sp-3); }
+  .modal-box { border-radius: var(--r-lg); }
+}
+
+/* ---------- ≤ 480px : small phone ---------- */
+@media (max-width: 480px) {
+  .display-title { font-size: clamp(1.7rem, 8.5vw, 2.4rem); }
+  .movie-card { width: clamp(120px, 36vw, 145px); }
+  .sk-card { width: clamp(120px, 36vw, 145px); }
+  .movie-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-actions .btn-lg { padding: 0.7rem 1.15rem; }
+  .filter-group { min-width: 100%; }
+  .header-actions .theme-toggle-btn { display: none; }
+  .episode-grid { grid-template-columns: repeat(4, 1fr); }
+  .stat-cards { grid-template-columns: 1fr 1fr; }
+  .profile-stats { gap: var(--sp-4); }
+}
+
+/* ---------- Desktop only helpers ---------- */
+@media (min-width: 769px) {
+  .mobile-search-toggle { display: none; }
+  .only-mobile { display: none !important; }
+}
+
+/* ---------- Touch devices: always show a hint of overlay actions ---------- */
+@media (hover: none) {
+  .movie-card:hover .card-poster img { transform: none; }
+  .rail-arrow { display: none; }
+}
+
+/* ---------- Landscape phone: player fullscreen-like ---------- */
+@media (max-width: 920px) and (orientation: landscape) {
+  .player-shell { max-height: 88vh; }
+}

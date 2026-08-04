@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh Sách Của Tôi — CINEVA</title>
+  <meta name="description" content="Những bộ phim bạn đã lưu để xem sau trên CINEVA.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23e2354f'/%3E%3Cstop offset='.5' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M26 20l18 12-18 12z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <script src="assets/js/theme.js"></script>
+</head>
+<body data-page="watchlist" class="page-fade">
+  <header class="site-header"></header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container" style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div>
+          <h1 class="display-title">Danh sách <span class="text-gradient">của tôi</span></h1>
+          <p id="wl-count"></p>
+        </div>
+        <button class="btn btn-glass" id="wl-clear"><i class="fa-solid fa-trash-can"></i> Xóa tất cả</button>
+      </div>
+    </section>
+    <div class="container">
+      <div class="movie-grid" id="watchlist-grid" style="margin-bottom:4rem"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="assets/js/movies.js"></script>
+  <script src="assets/js/watchlist.js"></script>
+  <script src="assets/js/history.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/search.js"></script>
+</body>
+</html>

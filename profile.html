@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ Sơ Cá Nhân — CINEVA</title>
+  <meta name="description" content="Quản lý hồ sơ, danh sách phim đã lưu và lịch sử xem của bạn trên CINEVA.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23e2354f'/%3E%3Cstop offset='.5' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath d='M26 20l18 12-18 12z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <script src="assets/js/theme.js"></script>
+</head>
+<body data-page="profile" class="page-fade">
+  <header class="site-header"></header>
+
+  <main id="profile-mount">
+    <section class="page-hero">
+      <div class="container">
+        <div class="profile-head reveal in-view">
+          <div class="profile-ava" id="p-ava">C</div>
+          <div>
+            <h1 class="display-title" id="p-name" style="font-size:clamp(1.8rem,4vw,2.6rem)">Khách CINEVA</h1>
+            <p id="p-email" style="color:var(--text-3)">guest@cineva.demo</p>
+            <div class="profile-stats">
+              <div class="p-stat"><strong id="p-stat-wl">0</strong><span>Đã lưu</span></div>
+              <div class="p-stat"><strong id="p-stat-hist">0</strong><span>Đã xem</span></div>
+              <div class="p-stat"><strong id="p-stat-cw">0</strong><span>Đang xem dở</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="profile-sections"></div>
+
+    <section class="section">
+      <div class="container" style="max-width:720px">
+        <h2 class="section-title" style="margin-bottom:1.2rem">Cài đặt</h2>
+        <div class="settings-list panel-card" style="background:var(--surface-1);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:.4rem 1.4rem">
+          <div class="setting-row">
+            <div><strong>Giao diện tối</strong><p>Chuyển đổi giữa giao diện tối và sáng.</p></div>
+            <button class="switch" data-theme-switch role="switch" aria-checked="false" aria-label="Giao diện sáng"><span class="knob"></span></button>
+          </div>
+          <div class="setting-row">
+            <div><strong>Xóa dữ liệu cục bộ</strong><p>Xóa watchlist, lịch sử và tiến trình xem lưu trên máy.</p></div>
+            <button class="btn btn-glass" id="btn-clear-data" style="color:var(--crimson)"><i class="fa-solid fa-trash-can"></i> Xóa</button>
+          </div>
+          <div class="setting-row">
+            <div><strong>Đăng xuất</strong><p>Kết thúc phiên đăng nhập demo hiện tại.</p></div>
+            <button class="btn btn-glass" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"></footer>
+
+  <script src="assets/js/movies.js"></script>
+  <script src="assets/js/watchlist.js"></script>
+  <script src="assets/js/history.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/search.js"></script>
+</body>
+</html>
