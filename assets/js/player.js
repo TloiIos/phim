@@ -7,6 +7,19 @@
    ============================================================ */
 "use strict";
 
+/* Fallback URLs chung cho player — dùng khi:
+   1) Movie có videoUrl = "local://..." nhưng IndexedDB không có file
+      (phim upload cục bộ trên thiết bị khác — không xem được ở đây)
+   2) Tất cả URL trong mảng fallback đều lỗi
+   Ưu tiên: archive.org → test-videos.co.uk → w3schools (đã verify 200). */
+const PLAYER_FALLBACKS = [
+  "https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
+  "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4",
+  "https://test-videos.co.uk/vids/sintel/mp4/h264/720/Sintel_720_10s_1MB.mp4",
+  "https://www.w3schools.com/html/mov_bbb.mp4",
+  "https://www.w3schools.com/html/movie.mp4"
+];
+
 const Player = (() => {
   let movie, video, shell, season = null, episode = null;
   let hideTimer = null;
@@ -142,21 +155,31 @@ const Player = (() => {
       const key = movie.videoUrl.replace("local://", "");
       VideoStore.getURL(key).then(url => {
         if (url) {
+          // Đúng thiết bị đã upload — phát file local
           setSource(url, true);
+          _fallbackChain = [];
+          _currentSrc = url;
         } else {
-          UI.toast("Không tìm thấy video đã lưu. Vui lòng tải lại.", "error");
-          setSource("", true);
+          // File chỉ có trên thiết bị đã upload (desktop). Trên mobile/thiết bị
+          // khác, IndexedDB không có → thử fallback online thay vì thất bại.
+          UI.toast("Video này chỉ lưu cục bộ trên thiết bị upload. Đang phát bản demo.", "info");
+          const first = PLAYER_FALLBACKS[0];
+          setSource(first, true);
+          _fallbackChain = PLAYER_FALLBACKS.slice(1);
+          _currentSrc = first;
         }
       });
     } else if (Array.isArray(movie.videoUrl)) {
-      // Mảng URL fallback
-      setSource(movie.videoUrl[0], true);
-      _fallbackChain = movie.videoUrl.slice(1);
-      _currentSrc = movie.videoUrl[0];
+      // Mảng URL fallback (phim demo mặc định)
+      const first = movie.videoUrl[0];
+      setSource(first, true);
+      // Nối thêm PLAYER_FALLBACKS phòng khi tất cả URL trong phim đều lỗi
+      _fallbackChain = [...movie.videoUrl.slice(1), ...PLAYER_FALLBACKS];
+      _currentSrc = first;
     } else {
       // Single URL
       setSource(movie.videoUrl, true);
-      _fallbackChain = [];
+      _fallbackChain = [...PLAYER_FALLBACKS];
       _currentSrc = movie.videoUrl;
     }
   }
@@ -187,8 +210,10 @@ const Player = (() => {
         <i class="fa-solid fa-triangle-exclamation"></i>
         <h3>Không thể phát video</h3>
         <p>Nguồn video có thể đang bị chặn bởi mạng của bạn hoặc định dạng không được hỗ trợ.<br>Trên điện thoại, hãy thử chuyển Wi-Fi hoặc mạng 4G.</p>
-        <button class="btn btn-primary" id="ver-retry"><i class="fa-solid fa-rotate-right"></i> Thử lại</button>
-        <button class="btn btn-glass" id="ver-next" style="margin-left:.5rem"><i class="fa-solid fa-forward"></i> Nguồn khác</button>`;
+        <div class="video-error-actions">
+          <button class="btn btn-primary" id="ver-retry"><i class="fa-solid fa-rotate-right"></i> Thử lại</button>
+          <button class="btn btn-glass" id="ver-next"><i class="fa-solid fa-forward"></i> Nguồn khác</button>
+        </div>`;
       shell?.appendChild(overlay);
       overlay.querySelector("#ver-retry")?.addEventListener("click", () => {
         overlay.style.display = "none";

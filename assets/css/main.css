@@ -1073,6 +1073,50 @@ h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
 .pop-item.active { color: var(--cyan); }
 .pop-item.active::after { content: "✓"; }
 
+/* Video error overlay — hiển thị khi tất cả nguồn lỗi */
+.video-error {
+  position: absolute; inset: 0;
+  z-index: 20;
+  display: none;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  text-align: center;
+  background: linear-gradient(135deg, rgba(5,5,5,0.92), rgba(13,16,23,0.95));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #fff;
+  animation: fadeSlideUp var(--dur-2) var(--ease);
+}
+.video-error[style*="display: flex"] { display: flex !important; }
+.video-error i {
+  font-size: 3rem;
+  color: var(--crimson-soft);
+  filter: drop-shadow(0 0 18px rgba(226, 53, 79, 0.5));
+}
+.video-error h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 700;
+  margin: 0;
+}
+.video-error p {
+  max-width: 480px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+.video-error .video-error-actions {
+  display: flex; flex-wrap: wrap; gap: var(--sp-3); justify-content: center;
+  margin-top: var(--sp-2);
+}
+@media (max-width: 600px) {
+  .video-error i { font-size: 2.2rem; }
+  .video-error { padding: var(--sp-5); }
+}
+
 /* Episode panel */
 .episode-panel { margin-top: var(--sp-6); }
 .season-tabs { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-4); flex-wrap: wrap; }
