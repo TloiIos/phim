@@ -123,14 +123,33 @@ const Art = (() => {
 const FirebaseDB = (() => {
   const BASE = "https://keyb-2f31d-default-rtdb.asia-southeast1.firebasedatabase.app";
   const PATH = "/movies.json";
-
+  // Firebase RTDB tự xóa mảng rỗng / trường undefined → phải chuẩn hóa khi tải về
+  function normalize(m) {
+    if (!m || typeof m !== "object") return null;
+    return {
+      ...m,
+      id: Number(m.id) || Date.now(),
+      title: m.title || "Không tên",
+      year: Number(m.year) || new Date().getFullYear(),
+      rating: Number(m.rating) || 0,
+      duration: m.duration || "",
+      country: m.country || "Vietnam",
+      description: m.description || "",
+      type: m.type === "series" ? "series" : "movie",
+      genres: Array.isArray(m.genres) ? m.genres : [],
+      quality: Array.isArray(m.quality) && m.quality.length ? m.quality : ["HD"],
+      cast: Array.isArray(m.cast) ? m.cast : [],
+      featured: !!m.featured,
+      isNew: !!m.isNew
+    };
+  }
   async function fetchAll() {
     const res = await fetch(BASE + PATH);
     if (!res.ok) throw new Error(`Firebase fetch error: ${res.status}`);
     const data = await res.json();
     // Firebase RTDB trả về object keyed by id, hoặc null nếu rỗng
     if (!data || typeof data !== "object") return [];
-    return Object.values(data);
+    return Object.values(data).map(normalize).filter(Boolean);
   }
 
   async function saveAll(movies) {
@@ -155,7 +174,7 @@ const FirebaseDB = (() => {
     }
   }
 
-  return { fetchAll, saveAll, seedIfEmpty };
+  return { fetchAll, saveAll, seedIfEmpty, normalize };
 })();
 
 /* ---------- MovieDB: nguồn dữ liệu hợp nhất (Firebase → localStorage → MOVIES_DATA) ---------- */
@@ -165,7 +184,11 @@ const MovieDB = (() => {
   let firebaseReady = false;
 
   function overlay() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch { return null; }
+    try {
+      const raw = JSON.parse(localStorage.getItem(KEY));
+      if (!Array.isArray(raw)) return null;
+      return raw.map(FirebaseDB.normalize).filter(Boolean);
+    } catch { return null; }
   }
 
   function saveLocal(list) {

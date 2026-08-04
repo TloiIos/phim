@@ -18,10 +18,10 @@ const Admin = (() => {
     const all = MovieDB.all();
     const movies = all.filter(m => m.type === "movie").length;
     const series = all.filter(m => m.type === "series").length;
-    const avg = (all.reduce((s, m) => s + m.rating, 0) / all.length).toFixed(1);
+    const avg = all.length ? (all.reduce((s, m) => s + (m.rating || 0), 0) / all.length).toFixed(1) : "0.0";
     // Đếm theo thể loại
     const genreCount = {};
-    all.forEach(m => m.genres.forEach(g => genreCount[g] = (genreCount[g] || 0) + 1));
+    all.forEach(m => (m.genres || []).forEach(g => genreCount[g] = (genreCount[g] || 0) + 1));
     const topGenres = Object.entries(genreCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
     const max = topGenres[0]?.[1] || 1;
     const recent = [...all].sort((a, b) => b.id - a.id).slice(0, 6);
@@ -53,7 +53,7 @@ const Admin = (() => {
             <img class="t-poster" src="${Art.poster(m)}" alt="" width="40" height="58">
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.title)}</div>
-              <div style="font-size:.8rem;color:var(--text-3)">${m.year} · ${genreVi(m.genres[0])}</div>
+              <div style="font-size:.8rem;color:var(--text-3)">${m.year} · ${genreVi((m.genres || [])[0] || "")}</div>
             </div>
             <span class="admin-badge ${m.type}">${m.type === "series" ? "Bộ" : "Lẻ"}</span>
           </div>`).join("")}
@@ -125,8 +125,8 @@ const Admin = (() => {
         </td>
         <td>${m.year}</td>
         <td><span class="admin-badge ${m.type}">${m.type === "series" ? "Phim bộ" : "Phim lẻ"}</span></td>
-        <td><i class="fa-solid fa-star" style="color:var(--gold)"></i> ${m.rating.toFixed(1)}</td>
-        <td style="max-width:180px">${m.genres.slice(0, 3).map(genreVi).join(", ")}</td>
+        <td><i class="fa-solid fa-star" style="color:var(--gold)"></i> ${(m.rating || 0).toFixed(1)}</td>
+        <td style="max-width:180px">${(m.genres || []).slice(0, 3).map(genreVi).join(", ")}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="btn btn-icon" data-edit="${m.id}" aria-label="Sửa ${esc(m.title)}"><i class="fa-solid fa-pen"></i></button>
           <button class="btn btn-icon" data-del="${m.id}" aria-label="Xóa ${esc(m.title)}" style="color:var(--crimson)"><i class="fa-solid fa-trash-can"></i></button>
