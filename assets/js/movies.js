@@ -174,24 +174,31 @@ const MovieDB = (() => {
 
   async function syncFromFirebase() {
     try {
-      const data = await FirebaseDB.seedIfEmpty();
+      const data = await FirebaseDB.fetchAll();
       if (data && data.length > 0) {
         cache = data;
         saveLocal(data);
-        firebaseReady = true;
         console.log(`✅ Đã đồng bộ ${data.length} phim từ Firebase`);
         return data;
       }
+      // Firebase rỗng → seed dữ liệu mẫu
+      const seed = MOVIES_DATA.map(m => ({ ...m }));
+      await FirebaseDB.saveAll(seed);
+      cache = seed;
+      saveLocal(seed);
+      console.log(`✅ Đã seed ${seed.length} phim lên Firebase`);
+      return seed;
     } catch (err) {
       console.warn("⚠️ Không kết nối được Firebase, dùng dữ liệu cục bộ:", err.message);
     }
+    // Fallback: dùng localStorage hoặc MOVIES_DATA
+    firebaseReady = false;
     return null;
   }
 
   function all() {
     if (cache) return cache;
     const ov = overlay();
-    // Nếu có dữ liệu trong localStorage (kể cả mảng rỗng) thì dùng, ngược lại dùng mặc định
     cache = (ov !== null && Array.isArray(ov)) ? ov : MOVIES_DATA.map(m => ({ ...m }));
     return cache;
   }
@@ -199,20 +206,17 @@ const MovieDB = (() => {
   function save(list) {
     cache = list;
     saveLocal(list);
-    // Luôn đồng bộ lên Firebase, bất kể firebaseReady
+    // Luôn đồng bộ lên Firebase
     FirebaseDB.saveAll(list)
       .then(() => { firebaseReady = true; })
       .catch(err => console.warn("Không đồng bộ được Firebase:", err.message));
   }
 
-  // Khởi tạo: đồng bộ từ Firebase
+  // Khởi tạo: đồng bộ từ Firebase, luôn dispatch event kể cả khi lỗi
   syncFromFirebase().then(data => {
-    if (data) {
-      // Cập nhật cache nếu chưa có ai gọi all() trước
-      if (!cache) cache = data;
-      // Phát sự kiện để các trang đã render cập nhật lại
-      document.dispatchEvent(new CustomEvent("movies:synced", { detail: data }));
-    }
+    if (data) cache = data;
+    firebaseReady = true;
+    document.dispatchEvent(new CustomEvent("movies:synced", { detail: all() }));
   });
 
   return {
