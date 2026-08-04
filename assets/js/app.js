@@ -84,6 +84,8 @@ const UI = (() => {
       ink.style.top = (e.clientY - rect.top - size / 2) + "px";
       btn.appendChild(ink);
       ink.addEventListener("animationend", () => ink.remove(), { once: true });
+      // Haptic nhẹ trên thiết bị hỗ trợ
+      if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
     });
   }
 
@@ -102,6 +104,49 @@ const UI = (() => {
       el.style.setProperty("--mx", dx.toFixed(1) + "px");
       el.style.setProperty("--my", dy.toFixed(1) + "px");
     });
+  }
+
+  /* ---- 3D tilt cho movie card (desktop) ---- */
+  function initCardTilt() {
+    if (!matchMedia("(hover:hover) and (pointer:fine)").matches) return;
+    document.addEventListener("pointermove", e => {
+      const card = e.target.closest(".movie-card");
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width - 0.5) * 12;   // -6 → 6 deg
+      const y = ((e.clientY - r.top) / r.height - 0.5) * -10;  // -5 → 5 deg
+      card.style.transform = `translateY(-8px) perspective(900px) rotateY(${x.toFixed(2)}deg) rotateX(${y.toFixed(2)}deg)`;
+    });
+    document.addEventListener("pointerleave", e => {
+      const card = e.target.closest && e.target.closest(".movie-card");
+      if (card) card.style.transform = "";
+    });
+    // Reset khi rời card bằng cách track qua class :hover
+    document.addEventListener("mouseout", e => {
+      const card = e.target.closest && e.target.closest(".movie-card");
+      const to = e.relatedTarget;
+      if (card && (!to || !card.contains(to))) card.style.transform = "";
+    });
+  }
+
+  /* ---- Parallax cho hero background theo scroll ---- */
+  function initHeroParallax() {
+    const hero = document.getElementById("hero");
+    if (!hero) return;
+    let ticking = false;
+    const update = () => {
+      const r = hero.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < window.innerHeight) {
+        const offset = r.top * 0.18;
+        const bg = hero.querySelector(".hero-bg");
+        if (bg) bg.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;
+      }
+      ticking = false;
+    };
+    window.addEventListener("scroll", () => {
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    }, { passive: true });
+    update();
   }
 
   /* ---- Scroll reveal ---- */
@@ -138,7 +183,7 @@ const UI = (() => {
     return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
   };
 
-  return { toast, openTrailer, closeModal, initRipple, initMagnetic, observeReveals, bindLazyImages, debounce };
+  return { toast, openTrailer, closeModal, initRipple, initMagnetic, initCardTilt, initHeroParallax, observeReveals, bindLazyImages, debounce };
 })();
 
 /* ============ RENDER HELPERS ============ */
@@ -152,7 +197,7 @@ const Render = (() => {
     const progress = opts.progress != null
       ? `<div class="card-progress" aria-label="Đã xem ${Math.round(opts.progress)}%"><span style="width:${opts.progress}%"></span></div>` : "";
     return `
-    <article class="movie-card" data-id="${movie.id}" tabindex="0" aria-label="${esc(movie.title)} (${movie.year})">
+    <article class="movie-card" data-id="${movie.id}" data-genre="${(movie.genres && movie.genres[0]) || ""}" tabindex="0" aria-label="${esc(movie.title)} (${movie.year})">
       <div class="card-poster">
         <img class="lazy-img" src="${Art.poster(movie)}" alt="Poster phim ${esc(movie.title)}" loading="lazy" width="600" height="900">
         <div class="card-badges">
@@ -248,8 +293,21 @@ function initCardActions() {
         actBtn.innerHTML = `<i class="fa-solid ${added ? "fa-check" : "fa-plus"}"></i>`;
         UI.toast(added ? `Đã thêm "${movie.title}" vào danh sách` : `Đã xóa "${movie.title}" khỏi danh sách`, added ? "success" : "info");
         document.dispatchEvent(new CustomEvent("watchlist:change"));
+        if (navigator.vibrate) try { navigator.vibrate(added ? [10, 50, 10] : 12); } catch {}
       }
       return;
+    }
+    // Touch tap toggle overlay để hiện action trên mobile
+    if (matchMedia("(hover:none)").matches) {
+      const isActive = card.classList.contains("touch-open");
+      document.querySelectorAll(".movie-card.touch-open").forEach(c => c.classList.remove("touch-open"));
+      if (!isActive) {
+        card.classList.add("touch-open");
+        // Tự ẩn sau 3s nếu không tương tác
+        clearTimeout(card._tt);
+        card._tt = setTimeout(() => card.classList.remove("touch-open"), 3000);
+        return;
+      }
     }
     location.href = `movie.html?id=${id}`;
   });
@@ -259,6 +317,27 @@ function initCardActions() {
     const card = e.target.closest?.(".movie-card");
     if (card && e.target === card) location.href = `movie.html?id=${card.dataset.id}`;
   });
+}
+
+/* ============ CARD SECTION PARALLAX (rail title drift) ============ */
+function initSectionParallax() {
+  if (!matchMedia("(hover:hover) and (pointer:fine)").matches) return;
+  let ticking = false;
+  const update = () => {
+    document.querySelectorAll(".section-title").forEach(t => {
+      const r = t.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) return;
+      const offset = (r.top - window.innerHeight / 2) / window.innerHeight;
+      t.style.setProperty("--tilt", `translateY(${(-offset * 4).toFixed(2)}px)`);
+      // Section title drift dùng CSS variable
+      t.style.transform = `translateY(${(-offset * 4).toFixed(2)}px)`;
+    });
+    ticking = false;
+  };
+  window.addEventListener("scroll", () => {
+    if (!ticking) { requestAnimationFrame(update); ticking = true; }
+  }, { passive: true });
+  update();
 }
 
 /* ============ LAYOUT (header / footer / navs) ============ */
@@ -355,6 +434,13 @@ const Layout = (() => {
         <div class="footer-brand">
           <a class="logo" href="index.html"><span class="logo-mark"><i class="fa-solid fa-clapperboard"></i></span> CINEVA</a>
           <p>Nền tảng thư viện phim demo với trải nghiệm điện ảnh cao cấp. Toàn bộ nội dung phim là hư cấu; video demo sử dụng nguồn mở được cấp phép Creative Commons.</p>
+          <div class="footer-socials" aria-label="Mạng xã hội">
+            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+          </div>
         </div>
         <div class="footer-col">
           <h4>Khám phá</h4>
@@ -449,6 +535,14 @@ const Layout = (() => {
 function bootScreen() {
   const boot = document.querySelector(".boot-screen");
   if (!boot) return;
+  // Thêm 3 orb particles để có hiệu ứng gradient động
+  if (!boot.querySelector(".boot-orb")) {
+    ["a", "b", "c"].forEach(k => {
+      const orb = document.createElement("div");
+      orb.className = `boot-orb ${k}`;
+      boot.appendChild(orb);
+    });
+  }
   const done = () => {
     boot.classList.add("done");
     setTimeout(() => boot.remove(), 600);
@@ -498,7 +592,16 @@ const HomePage = (() => {
     heroIndex = i;
     const m = heroMovies[i];
     hero.querySelectorAll(".hero-slide").forEach(s => s.classList.toggle("active", Number(s.dataset.i) === i));
-    hero.querySelectorAll(".hero-dots button").forEach((d, di) => d.classList.toggle("active", di === i));
+    hero.querySelectorAll(".hero-dots button").forEach((d, di) => {
+      d.classList.toggle("active", di === i);
+      // restart progress animation
+      d.style.animation = "none";
+      // eslint-disable-next-line no-unused-expressions
+      d.offsetHeight;
+      d.style.animation = "";
+    });
+    const num = hero.querySelector("#hero-counter-num");
+    if (num) num.textContent = String(i + 1).padStart(2, "0");
     const content = hero.querySelector(".hero-content");
     hero.classList.add("switching");
     setTimeout(() => {
@@ -521,9 +624,14 @@ const HomePage = (() => {
     heroMovies = MovieDB.featured().slice(0, 5);
     if (!heroMovies.length) heroMovies = MovieDB.topRated().slice(0, 5);
     const m = heroMovies[0];
+    const pad = n => String(n).padStart(2, "0");
     hero.innerHTML = `
       <div class="hero-bg">${heroMovies.map(heroSlideHTML).join("")}</div>
       <div class="container hero-content">${heroContentHTML(m)}</div>
+      <div class="hero-counter" aria-hidden="true">
+        <span id="hero-counter-num">01</span>
+        <small>/ ${pad(heroMovies.length)}</small>
+      </div>
       <div class="hero-dots" role="tablist" aria-label="Chọn phim nổi bật">
         ${heroMovies.map((mv, i) => `<button role="tab" aria-label="Phim ${Render.esc(mv.title)}" class="${i === 0 ? "active" : ""}" data-dot="${i}"></button>`).join("")}
       </div>`;
@@ -1112,7 +1220,10 @@ document.addEventListener("DOMContentLoaded", () => {
   Layout.mount();
   UI.initRipple();
   UI.initMagnetic();
+  UI.initCardTilt();
+  UI.initHeroParallax();
   initCardActions();
+  initSectionParallax();
   UI.observeReveals();
 
   const page = document.body.dataset.page;

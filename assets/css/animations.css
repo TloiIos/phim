@@ -56,31 +56,81 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -30px) scale(1.1); }
+  66% { transform: translate(-15px, 25px) scale(0.95); }
+}
+
+@keyframes filterShine {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(30px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes heroProgress {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes footerDrift {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 220px 220px, -180px 180px, 260px -260px, -200px 200px; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 18px var(--card-glow, rgba(139, 92, 246, 0.3)); }
+  50% { box-shadow: 0 0 32px var(--card-glow, rgba(139, 92, 246, 0.5)); }
+}
+
 /* ---------- Scroll reveal (IntersectionObserver) ---------- */
 .reveal {
   opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  transform: translateY(40px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
   will-change: opacity, transform;
 }
 .reveal.in-view {
   opacity: 1;
   transform: translateY(0);
 }
+.reveal[data-reveal="left"]  { transform: translateX(-50px); }
+.reveal[data-reveal="right"] { transform: translateX(50px); }
+.reveal[data-reveal="left"].in-view,
+.reveal[data-reveal="right"].in-view { transform: translateX(0); }
+.reveal[data-reveal="scale"] { transform: scale(0.92); }
+.reveal[data-reveal="scale"].in-view { transform: scale(1); }
+
 /* Stagger children in rails */
 .reveal-stagger > * {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+  transform: translateY(28px) scale(0.95);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
 }
-.reveal-stagger.in-view > * { opacity: 1; transform: translateY(0); }
-.reveal-stagger.in-view > *:nth-child(1) { transition-delay: 0.02s; }
-.reveal-stagger.in-view > *:nth-child(2) { transition-delay: 0.07s; }
-.reveal-stagger.in-view > *:nth-child(3) { transition-delay: 0.12s; }
-.reveal-stagger.in-view > *:nth-child(4) { transition-delay: 0.17s; }
-.reveal-stagger.in-view > *:nth-child(5) { transition-delay: 0.22s; }
-.reveal-stagger.in-view > *:nth-child(6) { transition-delay: 0.27s; }
-.reveal-stagger.in-view > *:nth-child(n+7) { transition-delay: 0.32s; }
+.reveal-stagger.in-view > * { opacity: 1; transform: translateY(0) scale(1); }
+.reveal-stagger.in-view > *:nth-child(1)  { transition-delay: 0.00s; }
+.reveal-stagger.in-view > *:nth-child(2)  { transition-delay: 0.05s; }
+.reveal-stagger.in-view > *:nth-child(3)  { transition-delay: 0.10s; }
+.reveal-stagger.in-view > *:nth-child(4)  { transition-delay: 0.15s; }
+.reveal-stagger.in-view > *:nth-child(5)  { transition-delay: 0.20s; }
+.reveal-stagger.in-view > *:nth-child(6)  { transition-delay: 0.25s; }
+.reveal-stagger.in-view > *:nth-child(7)  { transition-delay: 0.30s; }
+.reveal-stagger.in-view > *:nth-child(8)  { transition-delay: 0.35s; }
+.reveal-stagger.in-view > *:nth-child(9)  { transition-delay: 0.40s; }
+.reveal-stagger.in-view > *:nth-child(10) { transition-delay: 0.45s; }
+.reveal-stagger.in-view > *:nth-child(n+11) { transition-delay: 0.50s; }
+
+/* Soft float for first section title to add life */
+.section-title { animation: float 6s ease-in-out infinite; }
 
 /* ---------- Page transition ---------- */
 .page-fade { animation: fadeIn 0.45s var(--ease); }
@@ -135,7 +185,11 @@ img.lazy-img.loaded { opacity: 1; }
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .hero-bg img { animation: none; }
+  .hero-bg img { animation: none; transform: scale(1.04); }
   .reveal, .reveal-stagger > * { opacity: 1; transform: none; }
   .hero-content > * { opacity: 1; animation: none; }
+  .movie-grid .movie-card { animation: none !important; opacity: 1; transform: none; }
+  .boot-orb { animation: none; }
+  .card-poster::after { transition: none; }
+  .hero-bg { transition: none !important; transform: none !important; }
 }

@@ -73,15 +73,18 @@
   .hero-actions { justify-content: center; }
   .hero-actions .btn { padding: 0.75rem 1.3rem; font-size: 0.88rem; }
   .hero-genres { justify-content: center; }
-  .hero-dots { flex-direction: row; right: 50%; transform: translateX(50%); bottom: 1.1rem; }
+  .hero-dots { flex-direction: row; right: 50%; transform: translateX(50%); bottom: 1.1rem; gap: 8px; }
   .hero-dots button { width: 22px; height: 4px; }
   .hero-dots button.active { width: 36px; height: 4px; }
+  .hero-counter { display: none; }
 
   /* Cards */
   .movie-card { width: clamp(132px, 38vw, 165px); }
   .sk-card { width: clamp(132px, 38vw, 165px); }
-  .movie-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-4) var(--sp-3); }
+  .movie-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: var(--sp-5) var(--sp-3); }
   .card-overlay { opacity: 0; } /* touch: dùng tap để mở chi tiết */
+  .movie-card.touch-open .card-overlay { opacity: 1; }
+  .movie-card.touch-open .card-poster img { transform: scale(1.05); }
 
   /* Sections */
   .section-head { margin-bottom: var(--sp-4); }
@@ -128,6 +131,7 @@
   /* Footer */
   .footer-grid { grid-template-columns: 1fr 1fr; gap: var(--sp-5); }
   .footer-brand { grid-column: 1 / -1; }
+  .footer-socials { justify-content: center; }
   .footer-bottom { justify-content: center; text-align: center; }
 
   /* Admin */

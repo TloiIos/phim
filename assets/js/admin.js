@@ -28,7 +28,7 @@ const Admin = (() => {
 
     return `
     <div class="stat-cards reveal-stagger in-view">
-      <div class="stat-card"><div class="s-ico" style="background:rgba(226,53,79,.15);color:var(--crimson)"><i class="fa-solid fa-film"></i></div><div><div class="s-num">${all.length}</div><div class="s-label">Tổng số phim</div></div></div>
+      <div class="xstat-card"><div class="s-ico" style="background:rgba(226,53,79,.15);color:var(--crimson)"><i class="fa-solid fa-film"></i></div><div><div class="s-num">${all.length}</div><div class="s-label">Tổng số phim</div></div></div>
       <div class="stat-card"><div class="s-ico" style="background:rgba(139,92,246,.15);color:var(--purple)"><i class="fa-solid fa-clapperboard"></i></div><div><div class="s-num">${movies}</div><div class="s-label">Phim lẻ</div></div></div>
       <div class="stat-card"><div class="s-ico" style="background:rgba(34,211,238,.15);color:var(--cyan)"><i class="fa-solid fa-tv"></i></div><div><div class="s-num">${series}</div><div class="s-label">Phim bộ</div></div></div>
       <div class="stat-card"><div class="s-ico" style="background:rgba(245,197,66,.15);color:var(--gold)"><i class="fa-solid fa-star"></i></div><div><div class="s-num">${avg}</div><div class="s-label">Điểm trung bình</div></div></div>
