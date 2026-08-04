@@ -550,6 +550,7 @@ const Admin = (() => {
 
   /* ============ SETTINGS ============ */
   function settingsHTML() {
+    const movieCount = MovieDB.all().length;
     return `
     <div class="panel-card" style="max-width:640px">
       <h3 style="margin-bottom:1.2rem">Cài đặt hệ thống</h3>
@@ -561,6 +562,10 @@ const Admin = (() => {
         <div class="setting-row">
           <div><strong>Xuất dữ liệu phim</strong><p>Tải danh sách phim hiện tại dưới dạng JSON.</p></div>
           <button class="btn btn-glass" id="a-export"><i class="fa-solid fa-download"></i> Xuất JSON</button>
+        </div>
+        <div class="setting-row">
+          <div><strong>Xóa toàn bộ phim</strong><p>Xóa tất cả ${movieCount} phim khỏi hệ thống. Hành động này không thể hoàn tác.</p></div>
+          <button class="btn btn-glass" id="a-delete-all" style="color:var(--crimson)"><i class="fa-solid fa-trash"></i> Xóa tất cả</button>
         </div>
         <div class="setting-row">
           <div><strong>Khôi phục dữ liệu gốc</strong><p>Xóa mọi chỉnh sửa phim và trở về dữ liệu mặc định.</p></div>
@@ -629,11 +634,36 @@ const Admin = (() => {
         UI.toast("Đã khôi phục dữ liệu gốc", "success");
         renderTab("dashboard");
       });
+      $("#a-delete-all")?.addEventListener("click", () => {
+        const count = MovieDB.all().length;
+        if (count === 0) { UI.toast("Không có phim nào để xóa.", "info"); return; }
+        if (!confirm(`Bạn có chắc muốn xóa TOÀN BỘ ${count} phim? Hành động này không thể hoàn tác!`)) return;
+        // Xóa video local nếu có
+        const movies = MovieDB.all();
+        movies.forEach(m => {
+          if (m.videoUrl && m.videoUrl.startsWith("local://")) {
+            const key = m.videoUrl.replace("local://", "");
+            VideoStore.remove(key).catch(() => {});
+          }
+        });
+        MovieDB.saveData([]);
+        UI.toast(`Đã xóa toàn bộ ${count} phim`, "success");
+        renderTab("dashboard");
+      });
     }
   }
 
   function init() {
     if (!document.getElementById("admin-content")) return;
+    // Hiển thị tên admin
+    const adminUser = AdminAuth.user();
+    const avatar = document.getElementById("admin-avatar");
+    if (avatar && adminUser) avatar.textContent = adminUser.username.charAt(0).toUpperCase();
+    // Nút đăng xuất
+    document.getElementById("admin-logout")?.addEventListener("click", () => {
+      AdminAuth.logout();
+      location.href = "login.html";
+    });
     document.querySelectorAll(".admin-nav-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         if (btn.dataset.tab) renderTab(btn.dataset.tab);

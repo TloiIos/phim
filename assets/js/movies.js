@@ -130,7 +130,8 @@ const MovieDB = (() => {
   function all() {
     if (cache) return cache;
     const ov = overlay();
-    cache = ov && Array.isArray(ov) && ov.length ? ov : MOVIES_DATA.map(m => ({ ...m }));
+    // Nếu có dữ liệu trong localStorage (kể cả mảng rỗng) thì dùng, ngược lại dùng mặc định
+    cache = (ov !== null && Array.isArray(ov)) ? ov : MOVIES_DATA.map(m => ({ ...m }));
     return cache;
   }
   function save(list) {
@@ -173,6 +174,9 @@ const MovieDB = (() => {
     },
     reset() {
       localStorage.removeItem(KEY); cache = null;
+    },
+    saveData(list) {
+      save(list);
     }
   };
 })();

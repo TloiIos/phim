@@ -825,49 +825,218 @@ const MoviePage = (() => {
   return { init };
 })();
 
+/* ============ ADMIN AUTH ============ */
+const AdminAuth = (() => {
+  const KEY = "cineva_admin_auth";
+  // Tài khoản admin mặc định (chỉ dùng cho demo client-side)
+  const ADMIN_CREDENTIALS = { username: "admin", password: "cineva2024" };
+
+  function isLoggedIn() {
+    try { return JSON.parse(localStorage.getItem(KEY))?.loggedIn === true; }
+    catch { return false; }
+  }
+
+  function login(username, password) {
+    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+      localStorage.setItem(KEY, JSON.stringify({ loggedIn: true, username, time: Date.now() }));
+      return true;
+    }
+    return false;
+  }
+
+  function logout() {
+    localStorage.removeItem(KEY);
+  }
+
+  function user() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || null; }
+    catch { return null; }
+  }
+
+  return { isLoggedIn, login, logout, user };
+})();
+
+/* ============ USER AUTH ============ */
+const UserAuth = (() => {
+  const USERS_KEY = "cineva_users";
+  const SESSION_KEY = "cineva_user";
+
+  /** Lấy danh sách user đã đăng ký */
+  function _users() {
+    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function _saveUsers(users) {
+    try { localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+    catch { /* ignore */ }
+  }
+
+  /** Đăng ký tài khoản mới */
+  function register(email, password, name) {
+    const users = _users();
+    if (users.find(u => u.email === email)) return { ok: false, error: "Email đã được đăng ký." };
+    if (password.length < 6) return { ok: false, error: "Mật khẩu phải có ít nhất 6 ký tự." };
+    const user = { email, password, name, createdAt: Date.now() };
+    users.push(user);
+    _saveUsers(users);
+    // Tự động đăng nhập sau khi đăng ký
+    _setSession(user);
+    return { ok: true };
+  }
+
+  /** Đăng nhập */
+  function login(email, password) {
+    const users = _users();
+    const user = users.find(u => u.email === email && u.password === password);
+    if (!user) return { ok: false, error: "Email hoặc mật khẩu không đúng." };
+    _setSession(user);
+    return { ok: true };
+  }
+
+  function _setSession(user) {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        name: user.name,
+        email: user.email,
+        loggedIn: true,
+        time: Date.now()
+      }));
+    } catch { /* ignore */ }
+  }
+
+  function logout() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
+  function isLoggedIn() {
+    try { return JSON.parse(localStorage.getItem(SESSION_KEY))?.loggedIn === true; }
+    catch { return false; }
+  }
+
+  function user() {
+    try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || { name: "Khách CINEVA", email: "guest@cineva.demo" }; }
+    catch { return { name: "Khách CINEVA", email: "guest@cineva.demo" }; }
+  }
+
+  return { register, login, logout, isLoggedIn, user };
+})();
+
 /* ============ PAGE: LOGIN ============ */
 const LoginPage = (() => {
   function init() {
     const form = document.getElementById("login-form");
     if (!form) return;
+    const submitBtn = form.querySelector("button[type='submit']");
+    const titleEl = document.querySelector(".auth-card h1");
+    const subtitleEl = document.querySelector(".auth-card > p");
+    const nameGroup = document.getElementById("name-group");
+    const nameInput = document.getElementById("login-name");
+    const emailInput = document.getElementById("login-email");
+    const emailLabel = document.querySelector("label[for='login-email']");
+    const googleBtn = document.getElementById("btn-google");
+    const divider = document.querySelector(".auth-divider");
+    const toggleLink = document.getElementById("toggle-register");
+    const demoNote = document.querySelector(".auth-card > p:last-of-type");
+    let isRegisterMode = false;
+
+    function setMode(register) {
+      isRegisterMode = register;
+      if (isRegisterMode) {
+        if (nameGroup) nameGroup.style.display = "";
+        emailLabel.textContent = "Email";
+        emailInput.type = "email";
+        emailInput.placeholder = "ban@email.com";
+        emailInput.autocomplete = "email";
+        titleEl.textContent = "Tạo tài khoản";
+        subtitleEl.textContent = "Đăng ký để bắt đầu hành trình điện ảnh của bạn.";
+        submitBtn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Đăng ký';
+        if (googleBtn) googleBtn.style.display = "";
+        if (divider) divider.style.display = "";
+        if (toggleLink) toggleLink.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Đã có tài khoản?';
+        if (demoNote) demoNote.textContent = "Đây là trang demo — mật khẩu được lưu cục bộ trên trình duyệt của bạn.";
+      } else {
+        if (nameGroup) nameGroup.style.display = "none";
+        emailLabel.textContent = "Email";
+        emailInput.type = "email";
+        emailInput.placeholder = "ban@email.com";
+        emailInput.autocomplete = "email";
+        titleEl.textContent = "Chào mừng trở lại";
+        subtitleEl.textContent = "Đăng nhập để tiếp tục hành trình điện ảnh của bạn.";
+        submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Đăng nhập';
+        if (googleBtn) googleBtn.style.display = "";
+        if (divider) divider.style.display = "";
+        if (toggleLink) toggleLink.innerHTML = '<i class="fa-solid fa-user-plus"></i> Chưa có tài khoản?';
+        if (demoNote) demoNote.textContent = "Đây là trang demo — mật khẩu không được lưu trữ hay gửi đi bất cứ đâu.";
+      }
+    }
+
+    // Toggle register / login
+    toggleLink?.addEventListener("click", e => {
+      e.preventDefault();
+      setMode(!isRegisterMode);
+    });
+
     form.addEventListener("submit", e => {
       e.preventDefault();
-      const email = document.getElementById("login-email");
+      const email = emailInput;
       const pass = document.getElementById("login-password");
+      const name = nameInput;
       let valid = true;
       const emailGroup = email.closest(".form-group");
       const passGroup = pass.closest(".form-group");
+      const nameGrp = nameGroup;
       emailGroup.classList.remove("invalid"); passGroup.classList.remove("invalid");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) { emailGroup.classList.add("invalid"); valid = false; }
-      if (pass.value.length < 6) { passGroup.classList.add("invalid"); valid = false; }
-      if (!valid) return;
-      // Demo: chỉ lưu tên hiển thị (KHÔNG lưu mật khẩu)
-      const name = email.value.split("@")[0];
-      try { localStorage.setItem("cineva_user", JSON.stringify({ name, email: email.value.trim() })); } catch { /* ignore */ }
-      UI.toast(`Chào mừng trở lại, ${name}!`, "success");
-      setTimeout(() => location.href = "profile.html", 900);
+      if (nameGrp) nameGrp.classList.remove("invalid");
+
+      const emailVal = email.value.trim();
+      const passVal = pass.value;
+
+      if (isRegisterMode) {
+        // Register
+        if (name && name.value.trim().length < 2) { nameGrp.classList.add("invalid"); valid = false; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { emailGroup.classList.add("invalid"); valid = false; }
+        if (passVal.length < 6) { passGroup.classList.add("invalid"); valid = false; }
+        if (!valid) return;
+        const result = UserAuth.register(emailVal, passVal, (name?.value || emailVal.split("@")[0]).trim());
+        if (result.ok) {
+          UI.toast("Đăng ký thành công! Chào mừng bạn đến với CINEVA.", "success");
+          setTimeout(() => location.href = "index.html", 900);
+        } else {
+          UI.toast(result.error, "error");
+        }
+      } else {
+        // Login: kiểm tra admin trước
+        if (AdminAuth.login(emailVal, passVal)) {
+          UI.toast("Đăng nhập admin thành công!", "success");
+          setTimeout(() => location.href = "admin.html", 700);
+          return;
+        }
+        // User login
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) { emailGroup.classList.add("invalid"); valid = false; }
+        if (passVal.length < 6) { passGroup.classList.add("invalid"); valid = false; }
+        if (!valid) return;
+        const result = UserAuth.login(emailVal, passVal);
+        if (result.ok) {
+          UI.toast(`Chào mừng trở lại, ${UserAuth.user().name}!`, "success");
+          setTimeout(() => location.href = "index.html", 900);
+        } else {
+          UI.toast(result.error, "error");
+        }
+      }
     });
     document.getElementById("btn-google")?.addEventListener("click", () =>
       UI.toast("Đây là bản demo — đăng nhập Google chưa được kết nối.", "info"));
-    document.getElementById("link-forgot")?.addEventListener("click", e => {
-      e.preventDefault();
-      UI.toast("Đây là bản demo — chức năng khôi phục mật khẩu chưa được kết nối.", "info");
-    });
   }
   return { init };
 })();
 
 /* ============ PAGE: PROFILE ============ */
 const ProfilePage = (() => {
-  function user() {
-    try { return JSON.parse(localStorage.getItem("cineva_user")) || { name: "Khách CINEVA", email: "guest@cineva.demo" }; }
-    catch { return { name: "Khách CINEVA", email: "guest@cineva.demo" }; }
-  }
-
   function init() {
     const mount = document.getElementById("profile-mount");
     if (!mount) return;
-    const u = user();
+    const u = UserAuth.user();
     const wl = Watchlist.list();
     const hist = History.list();
     const cw = History.continueList();
@@ -912,7 +1081,7 @@ const ProfilePage = (() => {
     UI.bindLazyImages(secMount);
 
     document.getElementById("btn-logout")?.addEventListener("click", () => {
-      localStorage.removeItem("cineva_user");
+      UserAuth.logout();
       UI.toast("Đã đăng xuất", "info");
       setTimeout(() => location.href = "login.html", 700);
     });
@@ -926,8 +1095,19 @@ const ProfilePage = (() => {
   return { init };
 })();
 
+/* ============ AUTH GUARD ============ */
+function authGuard() {
+  const page = document.body.dataset.page;
+  // Không chặn trang login, admin (có guard riêng) và 404
+  if (page === "login" || page === "admin" || page === "404") return;
+  if (!UserAuth.isLoggedIn()) {
+    location.href = "login.html";
+  }
+}
+
 /* ============ BOOTSTRAP ============ */
 document.addEventListener("DOMContentLoaded", () => {
+  authGuard();
   bootScreen();
   Layout.mount();
   UI.initRipple();
