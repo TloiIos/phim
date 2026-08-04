@@ -236,6 +236,8 @@ const Admin = (() => {
   }
 
   function bindForm() {
+    try {
+    console.log("🔧 bindForm: starting...");
     const currentMovie = editingId != null ? MovieDB.byId(editingId) : null;
     let videoSource = currentMovie?.videoUrl?.startsWith("local://") ? "upload" : "url";
     let uploadedFile = null;
@@ -564,6 +566,11 @@ const Admin = (() => {
       editingId = null;
       renderTab("movies");
     });
+    console.log("✅ bindForm: complete");
+    } catch (err) {
+      console.error("❌ bindForm CRASH:", err);
+      UI.toast("Lỗi khởi tạo form: " + err.message, "error");
+    }
   }
 
   /* ============ USERS (demo) ============ */
@@ -626,30 +633,44 @@ const Admin = (() => {
 
   /* ============ TAB ROUTING ============ */
   function renderTab(tab) {
+    try {
     currentTab = tab;
+    const main = $("#admin-content");
+    if (!main) { console.error("❌ renderTab: #admin-content not found"); return; }
+
     document.querySelectorAll(".admin-nav-btn").forEach(b =>
       b.classList.toggle("active", b.dataset.tab === tab));
     const titles = { dashboard: "Tổng quan", movies: "Quản lý phim", form: editingId != null ? "Sửa phim" : "Thêm phim", users: "Người dùng", settings: "Cài đặt" };
     const titleEl = $("#admin-title");
     if (titleEl) titleEl.textContent = titles[tab] || "Quản trị";
-    const main = $("#admin-content");
 
-    if (tab === "dashboard") main.innerHTML = dashboardHTML();
+    const safeEl = (sel) => $(sel);
+
+    if (tab === "dashboard") { main.innerHTML = dashboardHTML(); console.log("✅ renderTab: dashboard"); }
     else if (tab === "movies") {
       main.innerHTML = moviesHTML();
+      console.log("✅ renderTab: movies HTML set");
       renderTableRows();
-      $("#a-search").addEventListener("input", UI.debounce(e => { tableState.q = e.target.value; renderTableRows(); }, 200));
-      $("#a-type").addEventListener("change", e => { tableState.type = e.target.value; renderTableRows(); });
-      $("#a-sort").addEventListener("change", e => { tableState.sort = e.target.value; renderTableRows(); });
-      $("#a-add").addEventListener("click", () => { editingId = null; renderTab("form"); });
-      $("#a-tbody").addEventListener("click", e => {
+      const aSearch = safeEl("#a-search");
+      const aType = safeEl("#a-type");
+      const aSort = safeEl("#a-sort");
+      const aAdd = safeEl("#a-add");
+      const aTbody = safeEl("#a-tbody");
+      if (aSearch) aSearch.addEventListener("input", UI.debounce(e => { tableState.q = e.target.value; renderTableRows(); }, 200));
+      else console.error("❌ renderTab: #a-search not found");
+      if (aType) aType.addEventListener("change", e => { tableState.type = e.target.value; renderTableRows(); });
+      else console.error("❌ renderTab: #a-type not found");
+      if (aSort) aSort.addEventListener("change", e => { tableState.sort = e.target.value; renderTableRows(); });
+      else console.error("❌ renderTab: #a-sort not found");
+      if (aAdd) { aAdd.addEventListener("click", () => { editingId = null; renderTab("form"); }); console.log("✅ renderTab: #a-add bound"); }
+      else console.error("❌ renderTab: #a-add NOT FOUND — nút Thêm phim sẽ không hoạt động!");
+      if (aTbody) aTbody.addEventListener("click", e => {
         const edit = e.target.closest("[data-edit]");
         const del = e.target.closest("[data-del]");
         if (edit) { editingId = Number(edit.dataset.edit); renderTab("form"); }
         else if (del) {
-          const m = MovieDB.byId(del.dataset.del);
+          const m = MovieDB.byId(Number(del.dataset.del));
           if (m && confirm(`Xóa phim "${m.title}"?`)) {
-            // Clean up local video if exists
             if (m.videoUrl && m.videoUrl.startsWith("local://")) {
               const key = m.videoUrl.replace("local://", "");
               VideoStore.remove(key).catch(() => {});
@@ -660,15 +681,22 @@ const Admin = (() => {
           }
         }
       });
+      else console.error("❌ renderTab: #a-tbody not found");
     }
     else if (tab === "form") {
-      main.innerHTML = formHTML(editingId != null ? MovieDB.byId(editingId) : null);
+      const movie = editingId != null ? MovieDB.byId(editingId) : null;
+      main.innerHTML = formHTML(movie);
+      console.log("✅ renderTab: form HTML set, editingId=" + editingId);
       bindForm();
+      console.log("✅ renderTab: bindForm called");
     }
-    else if (tab === "users") main.innerHTML = usersHTML();
+    else if (tab === "users") { main.innerHTML = usersHTML(); console.log("✅ renderTab: users"); }
     else if (tab === "settings") {
       main.innerHTML = settingsHTML();
-      $("#a-export").addEventListener("click", () => {
+      const aExport = safeEl("#a-export");
+      const aReset = safeEl("#a-reset");
+      const aDeleteAll = safeEl("#a-delete-all");
+      if (aExport) aExport.addEventListener("click", () => {
         const blob = new Blob([JSON.stringify({ movies: MovieDB.all() }, null, 2)], { type: "application/json" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -677,10 +705,9 @@ const Admin = (() => {
         URL.revokeObjectURL(a.href);
         UI.toast("Đã xuất dữ liệu phim", "success");
       });
-      $("#a-reset").addEventListener("click", async () => {
+      if (aReset) aReset.addEventListener("click", async () => {
         if (!confirm("Khôi phục toàn bộ dữ liệu phim về mặc định? Mọi chỉnh sửa sẽ bị mất.")) return;
         MovieDB.reset();
-        // Đồng bộ dữ liệu gốc lên Firebase
         try {
           await FirebaseDB.saveAll(MOVIES_DATA.map(m => ({ ...m })));
           UI.toast("Đã khôi phục dữ liệu gốc và đồng bộ lên Firebase", "success");
@@ -689,11 +716,10 @@ const Admin = (() => {
         }
         renderTab("dashboard");
       });
-      $("#a-delete-all")?.addEventListener("click", () => {
+      if (aDeleteAll) aDeleteAll.addEventListener("click", () => {
         const count = MovieDB.all().length;
         if (count === 0) { UI.toast("Không có phim nào để xóa.", "info"); return; }
         if (!confirm(`Bạn có chắc muốn xóa TOÀN BỘ ${count} phim? Hành động này không thể hoàn tác!`)) return;
-        // Xóa video local nếu có
         const movies = MovieDB.all();
         movies.forEach(m => {
           if (m.videoUrl && m.videoUrl.startsWith("local://")) {
@@ -705,6 +731,11 @@ const Admin = (() => {
         UI.toast(`Đã xóa toàn bộ ${count} phim`, "success");
         renderTab("dashboard");
       });
+      console.log("✅ renderTab: settings");
+    }
+    } catch (err) {
+      console.error("❌ renderTab CRASH:", err);
+      UI.toast("Lỗi hiển thị trang: " + err.message, "error");
     }
   }
 
