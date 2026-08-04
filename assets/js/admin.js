@@ -676,13 +676,17 @@ const Admin = (() => {
       });
     });
 
-    // Hiển thị loading trong khi đồng bộ Firebase
-    const main = document.getElementById("admin-content");
-    main.innerHTML = `<div class="panel-card" style="text-align:center;padding:3rem"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--text-3)"></i><p style="margin-top:1rem;color:var(--text-3)">Đang đồng bộ dữ liệu từ máy chủ...</p></div>`;
+    // Render ngay không cần chờ Firebase
+    renderTab("dashboard");
 
-    MovieDB.onReady(() => {
-      renderTab("dashboard");
-    });
+    // Khi Firebase sync xong, tự refresh nếu đang ở dashboard
+    document.addEventListener("movies:synced", () => {
+      if (currentTab === "dashboard") renderTab("dashboard");
+      else if (currentTab === "movies") {
+        renderTab("movies");
+        renderTableRows();
+      }
+    }, { once: true });
   }
 
   return { init };
