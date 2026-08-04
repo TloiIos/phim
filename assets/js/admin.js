@@ -628,10 +628,16 @@ const Admin = (() => {
         URL.revokeObjectURL(a.href);
         UI.toast("Đã xuất dữ liệu phim", "success");
       });
-      $("#a-reset").addEventListener("click", () => {
+      $("#a-reset").addEventListener("click", async () => {
         if (!confirm("Khôi phục toàn bộ dữ liệu phim về mặc định? Mọi chỉnh sửa sẽ bị mất.")) return;
         MovieDB.reset();
-        UI.toast("Đã khôi phục dữ liệu gốc", "success");
+        // Đồng bộ dữ liệu gốc lên Firebase
+        try {
+          await FirebaseDB.saveAll(MOVIES_DATA.map(m => ({ ...m })));
+          UI.toast("Đã khôi phục dữ liệu gốc và đồng bộ lên Firebase", "success");
+        } catch {
+          UI.toast("Đã khôi phục dữ liệu gốc (chưa đồng bộ Firebase)", "warning");
+        }
         renderTab("dashboard");
       });
       $("#a-delete-all")?.addEventListener("click", () => {
@@ -669,7 +675,14 @@ const Admin = (() => {
         if (btn.dataset.tab) renderTab(btn.dataset.tab);
       });
     });
-    renderTab("dashboard");
+
+    // Hiển thị loading trong khi đồng bộ Firebase
+    const main = document.getElementById("admin-content");
+    main.innerHTML = `<div class="panel-card" style="text-align:center;padding:3rem"><i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;color:var(--text-3)"></i><p style="margin-top:1rem;color:var(--text-3)">Đang đồng bộ dữ liệu từ máy chủ...</p></div>`;
+
+    MovieDB.onReady(() => {
+      renderTab("dashboard");
+    });
   }
 
   return { init };

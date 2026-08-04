@@ -119,14 +119,75 @@ const Art = (() => {
   };
 })();
 
-/* ---------- MovieDB: nguồn dữ liệu hợp nhất (data + admin overlay) ---------- */
+/* ---------- FirebaseDB: đồng bộ dữ liệu qua Firebase Realtime Database ---------- */
+const FirebaseDB = (() => {
+  const BASE = "https://keyb-2f31d-default-rtdb.asia-southeast1.firebasedatabase.app";
+  const PATH = "/movies.json";
+
+  async function fetchAll() {
+    const res = await fetch(BASE + PATH);
+    if (!res.ok) throw new Error(`Firebase fetch error: ${res.status}`);
+    const data = await res.json();
+    // Firebase RTDB trả về object keyed by id, hoặc null nếu rỗng
+    if (!data || typeof data !== "object") return [];
+    return Object.values(data);
+  }
+
+  async function saveAll(movies) {
+    const res = await fetch(BASE + PATH, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(movies)
+    });
+    if (!res.ok) throw new Error(`Firebase save error: ${res.status}`);
+  }
+
+  async function seedIfEmpty() {
+    try {
+      const existing = await fetchAll();
+      if (existing.length === 0) {
+        await saveAll(MOVIES_DATA.map(m => ({ ...m })));
+        return MOVIES_DATA.map(m => ({ ...m }));
+      }
+      return existing;
+    } catch {
+      return null; // fallback
+    }
+  }
+
+  return { fetchAll, saveAll, seedIfEmpty };
+})();
+
+/* ---------- MovieDB: nguồn dữ liệu hợp nhất (Firebase → localStorage → MOVIES_DATA) ---------- */
 const MovieDB = (() => {
   const KEY = "cineva_admin_movies";
   let cache = null;
+  let firebaseReady = false;
 
   function overlay() {
     try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch { return null; }
   }
+
+  function saveLocal(list) {
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { console.error("Không thể lưu localStorage:", e); }
+  }
+
+  async function syncFromFirebase() {
+    try {
+      const data = await FirebaseDB.seedIfEmpty();
+      if (data && data.length > 0) {
+        cache = data;
+        saveLocal(data);
+        firebaseReady = true;
+        console.log(`✅ Đã đồng bộ ${data.length} phim từ Firebase`);
+        return data;
+      }
+    } catch (err) {
+      console.warn("⚠️ Không kết nối được Firebase, dùng dữ liệu cục bộ:", err.message);
+    }
+    return null;
+  }
+
   function all() {
     if (cache) return cache;
     const ov = overlay();
@@ -134,10 +195,26 @@ const MovieDB = (() => {
     cache = (ov !== null && Array.isArray(ov)) ? ov : MOVIES_DATA.map(m => ({ ...m }));
     return cache;
   }
+
   function save(list) {
     cache = list;
-    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { console.error("Không thể lưu dữ liệu:", e); }
+    saveLocal(list);
+    // Đồng bộ lên Firebase (fire-and-forget)
+    if (firebaseReady) {
+      FirebaseDB.saveAll(list).catch(err => console.warn("Không đồng bộ được Firebase:", err.message));
+    }
   }
+
+  // Khởi tạo: đồng bộ từ Firebase
+  syncFromFirebase().then(data => {
+    if (data) {
+      // Cập nhật cache nếu chưa có ai gọi all() trước
+      if (!cache) cache = data;
+      // Phát sự kiện để các trang đã render cập nhật lại
+      document.dispatchEvent(new CustomEvent("movies:synced", { detail: data }));
+    }
+  });
+
   return {
     all,
     byId: id => all().find(m => m.id === Number(id)) || null,
@@ -177,6 +254,11 @@ const MovieDB = (() => {
     },
     saveData(list) {
       save(list);
+    },
+    isReady: () => firebaseReady,
+    onReady: function(cb) {
+      if (firebaseReady) { cb(); return; }
+      document.addEventListener("movies:synced", () => cb(), { once: true });
     }
   };
 })();
