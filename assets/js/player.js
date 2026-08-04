@@ -23,7 +23,7 @@ const Player = (() => {
   /* ---------- UI markup ---------- */
   function playerHTML() {
     return `
-    <video id="cv-video" playsinline preload="metadata"></video>
+    <video id="cv-video" playsinline webkit-playsinline preload="metadata" crossorigin="anonymous" x5-video-player-type="h5" x5-video-orientation="portrait-sec"></video>
     <div class="player-ui">
       <div class="player-top">
         <a class="btn btn-icon btn-glass" href="movie.html?id=${movie.id}" aria-label="Quay lại"><i class="fa-solid fa-arrow-left"></i></a>
@@ -117,7 +117,7 @@ const Player = (() => {
   }
 
   function loadSource(resume = true) {
-    const setSource = (src) => {
+    const setSource = (src, isFirstTry = false) => {
       video.src = src;
       $("#pt-name").textContent = movie.title;
       $("#pt-sub").textContent = currentLabel();
@@ -128,6 +128,9 @@ const Player = (() => {
           video.currentTime = prog.t;
           UI.toast(`Tiếp tục từ ${fmt(prog.t)}`, "info");
         }
+        // Ẩn overlay lỗi nếu có
+        const err = document.getElementById("video-error-overlay");
+        if (err) err.style.display = "none";
       }, { once: true });
       History.record(movie.id, season, episode);
       const p = new URLSearchParams({ id: movie.id });
@@ -139,15 +142,64 @@ const Player = (() => {
       const key = movie.videoUrl.replace("local://", "");
       VideoStore.getURL(key).then(url => {
         if (url) {
-          setSource(url);
+          setSource(url, true);
         } else {
           UI.toast("Không tìm thấy video đã lưu. Vui lòng tải lại.", "error");
-          setSource("");
+          setSource("", true);
         }
       });
+    } else if (Array.isArray(movie.videoUrl)) {
+      // Mảng URL fallback
+      setSource(movie.videoUrl[0], true);
+      _fallbackChain = movie.videoUrl.slice(1);
+      _currentSrc = movie.videoUrl[0];
     } else {
-      setSource(movie.videoUrl);
+      // Single URL
+      setSource(movie.videoUrl, true);
+      _fallbackChain = [];
+      _currentSrc = movie.videoUrl;
     }
+  }
+
+  // State cho fallback chain
+  let _fallbackChain = [];
+  let _currentSrc = "";
+
+  function tryNextFallback() {
+    if (_fallbackChain.length === 0) {
+      showVideoError();
+      return false;
+    }
+    const next = _fallbackChain.shift();
+    console.warn(`[Player] source failed: ${_currentSrc}. Trying: ${next}`);
+    _currentSrc = next;
+    video.src = next;
+    return true;
+  }
+
+  function showVideoError() {
+    let overlay = document.getElementById("video-error-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "video-error-overlay";
+      overlay.className = "video-error";
+      overlay.innerHTML = `
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <h3>Không thể phát video</h3>
+        <p>Nguồn video có thể đang bị chặn bởi mạng của bạn hoặc định dạng không được hỗ trợ.<br>Trên điện thoại, hãy thử chuyển Wi-Fi hoặc mạng 4G.</p>
+        <button class="btn btn-primary" id="ver-retry"><i class="fa-solid fa-rotate-right"></i> Thử lại</button>
+        <button class="btn btn-glass" id="ver-next" style="margin-left:.5rem"><i class="fa-solid fa-forward"></i> Nguồn khác</button>`;
+      shell?.appendChild(overlay);
+      overlay.querySelector("#ver-retry")?.addEventListener("click", () => {
+        overlay.style.display = "none";
+        loadSource(true);
+      });
+      overlay.querySelector("#ver-next")?.addEventListener("click", () => {
+        overlay.style.display = "none";
+        tryNextFallback();
+      });
+    }
+    overlay.style.display = "flex";
   }
 
   function gotoEpisode(s, ep, autoplay = false) {
@@ -253,7 +305,12 @@ const Player = (() => {
     video.addEventListener("waiting", () => $("#big-play").innerHTML = `<span class="spinner" style="width:30px;height:30px;border-width:3px"></span>`);
     video.addEventListener("playing", updatePlayIcons);
     video.addEventListener("error", () => {
-      UI.toast("Không thể tải video. Kiểm tra kết nối mạng.", "error");
+      // Thử fallback kế tiếp nếu có; nếu không thì hiện overlay
+      if (_fallbackChain && _fallbackChain.length > 0) {
+        tryNextFallback();
+      } else {
+        showVideoError();
+      }
     });
     video.addEventListener("ended", () => {
       saveProgressNow();
