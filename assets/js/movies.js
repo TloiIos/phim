@@ -199,10 +199,10 @@ const MovieDB = (() => {
   function save(list) {
     cache = list;
     saveLocal(list);
-    // Đồng bộ lên Firebase (fire-and-forget)
-    if (firebaseReady) {
-      FirebaseDB.saveAll(list).catch(err => console.warn("Không đồng bộ được Firebase:", err.message));
-    }
+    // Luôn đồng bộ lên Firebase, bất kể firebaseReady
+    FirebaseDB.saveAll(list)
+      .then(() => { firebaseReady = true; })
+      .catch(err => console.warn("Không đồng bộ được Firebase:", err.message));
   }
 
   // Khởi tạo: đồng bộ từ Firebase
