@@ -239,49 +239,55 @@ const Admin = (() => {
     const currentMovie = editingId != null ? MovieDB.byId(editingId) : null;
     let videoSource = currentMovie?.videoUrl?.startsWith("local://") ? "upload" : "url";
     let uploadedFile = null;
-    let capturedPoster = null; // Blob/dataURL của poster chụp từ video
+    let capturedPoster = null;
 
-    // Hiển thị nút chụp ảnh nếu đang ở tab upload
+    const safeEl = (sel) => $(sel);
+
+    // Toggle capture button
     const toggleCaptureBtn = () => {
-      const btn = $("#a-capture-frame");
+      const btn = safeEl("#a-capture-frame");
       if (btn) btn.style.display = (videoSource === "upload" && uploadedFile) ? "" : "none";
     };
     const toggleRemoveBtn = () => {
-      const btn = $("#a-remove-poster");
+      const btn = safeEl("#a-remove-poster");
       if (btn) btn.style.display = capturedPoster ? "" : "none";
     };
     toggleCaptureBtn();
     toggleRemoveBtn();
 
     // Genre chips
-    $("#af-genres").addEventListener("click", e => {
-      const chip = e.target.closest("[data-g]");
-      if (chip) chip.classList.toggle("active");
-    });
+    const genreDiv = safeEl("#af-genres");
+    if (genreDiv) {
+      genreDiv.addEventListener("click", e => {
+        const chip = e.target.closest("[data-g]");
+        if (chip) chip.classList.toggle("active");
+      });
+    }
 
     // Video source tabs
     const srcTabs = document.querySelectorAll(".video-source-tab");
+    const vsUrl = safeEl("#vs-url");
+    const vsUpload = safeEl("#vs-upload");
     if (srcTabs.length) {
-      // Set initial active tab
       srcTabs.forEach(t => t.classList.toggle("active", t.dataset.vsrc === videoSource));
-      $("#vs-url").style.display = videoSource === "url" ? "" : "none";
-      $("#vs-upload").style.display = videoSource === "upload" ? "" : "none";
+      if (vsUrl) vsUrl.style.display = videoSource === "url" ? "" : "none";
+      if (vsUpload) vsUpload.style.display = videoSource === "upload" ? "" : "none";
 
       srcTabs.forEach(tab => {
         tab.addEventListener("click", () => {
           videoSource = tab.dataset.vsrc;
           srcTabs.forEach(t => t.classList.remove("active"));
           tab.classList.add("active");
-          $("#vs-url").style.display = videoSource === "url" ? "" : "none";
-          $("#vs-upload").style.display = videoSource === "upload" ? "" : "none";
+          if (vsUrl) vsUrl.style.display = videoSource === "url" ? "" : "none";
+          if (vsUpload) vsUpload.style.display = videoSource === "upload" ? "" : "none";
           toggleCaptureBtn();
         });
       });
     }
 
     // Upload zone: drag & drop
-    const zone = $("#upload-zone");
-    const fileInput = $("#af-file");
+    const zone = safeEl("#upload-zone");
+    const fileInput = safeEl("#af-file");
     if (zone && fileInput) {
       ["dragenter", "dragover"].forEach(ev => zone.addEventListener(ev, e => {
         e.preventDefault();
@@ -301,7 +307,7 @@ const Admin = (() => {
     }
 
     function handleFile(file) {
-      const maxSize = 2 * 1024 * 1024 * 1024; // 2GB
+      const maxSize = 2 * 1024 * 1024 * 1024;
       const allowed = ["video/mp4", "video/webm", "video/x-matroska", "video/quicktime"];
       const ext = file.name.split(".").pop().toLowerCase();
       const allowedExt = ["mp4", "webm", "mkv", "mov"];
@@ -314,13 +320,15 @@ const Admin = (() => {
         return;
       }
       uploadedFile = file;
-      $("#up-name").textContent = file.name;
-      $("#up-size").textContent = formatSize(file.size);
-      $("#upload-preview").classList.add("visible");
-      $("#af-file-err").style.display = "none";
+      const upName = safeEl("#up-name");
+      const upSize = safeEl("#up-size");
+      const upPreview = safeEl("#upload-preview");
+      if (upName) upName.textContent = file.name;
+      if (upSize) upSize.textContent = formatSize(file.size);
+      if (upPreview) upPreview.classList.add("visible");
+      const fileErr = safeEl("#af-file-err");
+      if (fileErr) fileErr.style.display = "none";
       toggleCaptureBtn();
-
-      // Tự động chụp ảnh từ video
       captureFrameFromVideo(file);
     }
 
@@ -329,16 +337,18 @@ const Admin = (() => {
         const posterBlob = await VideoStore.captureFrame(file);
         const url = URL.createObjectURL(posterBlob);
         setPoster(url, posterBlob);
-        $("#poster-hint").textContent = "Đã chụp ảnh tự động từ video. Nhấn nút bên dưới để chụp lại.";
+        const hint = safeEl("#poster-hint");
+        if (hint) hint.textContent = "Đã chụp ảnh tự động từ video. Nhấn nút bên dưới để chụp lại.";
       } catch (err) {
         console.warn("Không thể chụp ảnh tự động:", err);
-        $("#poster-hint").textContent = "Nhấn nút bên dưới để chụp ảnh từ video.";
+        const hint = safeEl("#poster-hint");
+        if (hint) hint.textContent = "Nhấn nút bên dưới để chụp ảnh từ video.";
       }
     }
 
     function setPoster(url, blob) {
       capturedPoster = { url, blob };
-      const img = $("#poster-img");
+      const img = safeEl("#poster-img");
       if (img) img.src = url;
       toggleRemoveBtn();
     }
@@ -350,49 +360,59 @@ const Admin = (() => {
       return (bytes / 1073741824).toFixed(2) + " GB";
     }
 
-    $("#up-remove")?.addEventListener("click", () => {
+    const upRemove = safeEl("#up-remove");
+    if (upRemove) upRemove.addEventListener("click", () => {
       uploadedFile = null;
       capturedPoster = null;
-      $("#upload-preview").classList.remove("visible");
-      fileInput.value = "";
+      const upPreview = safeEl("#upload-preview");
+      if (upPreview) upPreview.classList.remove("visible");
+      if (fileInput) fileInput.value = "";
       toggleCaptureBtn();
       toggleRemoveBtn();
-      // Reset poster về SVG mặc định
-      const img = $("#poster-img");
+      const img = safeEl("#poster-img");
       if (img) img.src = Art.poster({ id: Date.now(), title: "Chưa có ảnh", year: new Date().getFullYear(), palette: 0 });
-      $("#poster-hint").textContent = "Khi tải video lên, ảnh sẽ tự động được chụp từ video.";
+      const hint = safeEl("#poster-hint");
+      if (hint) hint.textContent = "Khi tải video lên, ảnh sẽ tự động được chụp từ video.";
     });
-    // Nút chụp ảnh từ video
-    $("#a-capture-frame")?.addEventListener("click", async () => {
+
+    const captureBtn = safeEl("#a-capture-frame");
+    if (captureBtn) captureBtn.addEventListener("click", async () => {
       if (!uploadedFile) { UI.toast("Vui lòng chọn file video trước", "error"); return; }
-      const btn = $("#a-capture-frame");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chụp...';
+      captureBtn.disabled = true;
+      captureBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chụp...';
       try {
         await captureFrameFromVideo(uploadedFile);
         UI.toast("Đã chụp ảnh từ video!", "success");
       } catch (err) {
         UI.toast("Không thể chụp ảnh. Vui lòng thử lại.", "error");
       } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-camera"></i> Lấy ảnh từ video';
+        captureBtn.disabled = false;
+        captureBtn.innerHTML = '<i class="fa-solid fa-camera"></i> Lấy ảnh từ video';
       }
     });
-    // Nút xóa poster
-    $("#a-remove-poster")?.addEventListener("click", () => {
+
+    const removePosterBtn = safeEl("#a-remove-poster");
+    if (removePosterBtn) removePosterBtn.addEventListener("click", () => {
       if (capturedPoster?.url) URL.revokeObjectURL(capturedPoster.url);
       capturedPoster = null;
       toggleRemoveBtn();
-      const img = $("#poster-img");
+      const img = safeEl("#poster-img");
       if (img) img.src = Art.poster({ id: Date.now(), title: "Chưa có ảnh", year: new Date().getFullYear(), palette: 0 });
-      $("#poster-hint").textContent = "Nhấn nút bên dưới để chụp ảnh từ video.";
+      const hint = safeEl("#poster-hint");
+      if (hint) hint.textContent = "Nhấn nút bên dưới để chụp ảnh từ video.";
     });
-    $("#af-type").addEventListener("change", e => {
-      $("#af-seasons-wrap").style.display = e.target.value === "series" ? "" : "none";
+
+    const afType = safeEl("#af-type");
+    if (afType) afType.addEventListener("change", e => {
+      const wrap = safeEl("#af-seasons-wrap");
+      if (wrap) wrap.style.display = e.target.value === "series" ? "" : "none";
     });
+
     const back = () => { editingId = null; renderTab("movies"); };
-    $("#a-form-back").addEventListener("click", back);
-    $("#a-form-cancel").addEventListener("click", back);
+    const formBack = safeEl("#a-form-back");
+    const formCancel = safeEl("#a-form-cancel");
+    if (formBack) formBack.addEventListener("click", back);
+    if (formCancel) formCancel.addEventListener("click", back);
 
     function blobToDataURL(blob) {
       return new Promise((resolve, reject) => {
@@ -403,16 +423,25 @@ const Admin = (() => {
       });
     }
 
-    $("#a-form").addEventListener("submit", async e => {
+    const form = safeEl("#a-form");
+    if (!form) {
+      console.error("❌ Không tìm thấy form #a-form!");
+      return;
+    }
+
+    form.addEventListener("submit", async e => {
       e.preventDefault();
       let valid = true;
       const req = (id, test) => {
-        const el = $(id), group = el.closest(".form-group");
+        const el = safeEl(id);
+        if (!el) { valid = false; return ""; }
+        const group = el.closest(".form-group");
         const ok = test(el.value.trim());
-        group.classList.toggle("invalid", !ok);
+        if (group) group.classList.toggle("invalid", !ok);
         if (!ok) valid = false;
         return el.value.trim();
       };
+
       const title = req("#af-title", v => v.length > 0);
       const year = Number(req("#af-year", v => v >= 1900 && v <= 2100));
       const rating = Number(req("#af-rating", v => v !== "" && v >= 0 && v <= 10));
@@ -425,92 +454,112 @@ const Admin = (() => {
         videoUrl = req("#af-video", v => /^https?:\/\/.+/.test(v));
       } else {
         if (!uploadedFile && !(editingId != null && currentMovie?.videoUrl?.startsWith("local://"))) {
-          $("#af-file-err").style.display = "block";
+          const fileErr = safeEl("#af-file-err");
+          if (fileErr) fileErr.style.display = "block";
           valid = false;
         } else {
-          $("#af-file-err").style.display = "none";
+          const fileErr = safeEl("#af-file-err");
+          if (fileErr) fileErr.style.display = "none";
         }
       }
 
-      const genres = [...document.querySelectorAll("#af-genres .genre-chip.active")].map(c => c.dataset.g);
-      $("#af-genres-err").style.display = genres.length ? "none" : "block";
+      const genreChips = document.querySelectorAll("#af-genres .genre-chip.active");
+      const genres = [...genreChips].map(c => c.dataset.g);
+      const genreErr = safeEl("#af-genres-err");
+      if (genreErr) genreErr.style.display = genres.length ? "none" : "block";
       if (!genres.length) valid = false;
+
       if (!valid) { UI.toast("Vui lòng kiểm tra lại các trường bị lỗi", "error"); return; }
 
-      const type = $("#af-type").value;
+      const typeEl = safeEl("#af-type");
+      const type = typeEl ? typeEl.value : "movie";
+
+      const getVal = (id, fallback = "") => {
+        const el = safeEl(id);
+        return el ? el.value.trim() : fallback;
+      };
+      const getChecked = (id) => {
+        const el = safeEl(id);
+        return el ? el.checked : false;
+      };
+
       const payload = {
         title, year, rating, description, genres, type,
-        originalTitle: $("#af-original").value.trim() || title,
-        duration: $("#af-duration").value.trim() || (type === "series" ? "45 phút/tập" : "110 phút"),
-        country: $("#af-country").value,
-        quality: $("#af-quality").value.split(",").map(s => s.trim()).filter(Boolean),
-        trailerUrl: $("#af-trailer").value.trim(),
-        director: $("#af-director").value.trim(),
-        cast: $("#af-cast").value.split(",").map(s => s.trim()).filter(Boolean),
-        featured: $("#af-featured").checked,
-        isNew: $("#af-new").checked
+        originalTitle: getVal("#af-original") || title,
+        duration: getVal("#af-duration") || (type === "series" ? "45 phút/tập" : "110 phút"),
+        country: getVal("#af-country", "Vietnam"),
+        quality: getVal("#af-quality", "HD").split(",").map(s => s.trim()).filter(Boolean),
+        trailerUrl: getVal("#af-trailer"),
+        director: getVal("#af-director"),
+        cast: getVal("#af-cast").split(",").map(s => s.trim()).filter(Boolean),
+        featured: getChecked("#af-featured"),
+        isNew: getChecked("#af-new")
       };
       if (!payload.quality.length) payload.quality = ["HD"];
 
-      // Handle upload
+      // Handle video upload
       if (videoSource === "upload" && uploadedFile) {
-        const progressBar = $("#up-bar");
-        const progressWrap = $("#upload-progress");
-        progressWrap.classList.add("visible");
-        progressBar.style.width = "0%";
+        const progressBar = safeEl("#up-bar");
+        const progressWrap = safeEl("#upload-progress");
+        if (progressWrap) progressWrap.classList.add("visible");
+        if (progressBar) progressBar.style.width = "0%";
         try {
-          // Simulate progress (IndexedDB writes are fast, but we show visual feedback)
           let progress = 0;
           const progressInterval = setInterval(() => {
             progress = Math.min(progress + Math.random() * 25, 85);
-            progressBar.style.width = progress + "%";
+            if (progressBar) progressBar.style.width = progress + "%";
           }, 200);
-          // Store in IndexedDB
           videoLocalKey = "vid_" + Date.now();
           await VideoStore.put(videoLocalKey, uploadedFile);
           clearInterval(progressInterval);
-          progressBar.style.width = "100%";
+          if (progressBar) progressBar.style.width = "100%";
           await new Promise(r => setTimeout(r, 300));
           UI.toast("Đã tải video lên thành công!", "success");
         } catch (err) {
           console.error("Lỗi lưu video:", err);
           UI.toast("Lỗi khi lưu video. Vui lòng thử lại.", "error");
-          progressWrap.classList.remove("visible");
+          if (progressWrap) progressWrap.classList.remove("visible");
           return;
         }
-        progressWrap.classList.remove("visible");
+        if (progressWrap) progressWrap.classList.remove("visible");
         videoUrl = "local://" + videoLocalKey;
       } else if (videoSource === "upload" && editingId != null && currentMovie?.videoUrl?.startsWith("local://")) {
-        videoUrl = currentMovie.videoUrl; // Keep existing local video
+        videoUrl = currentMovie.videoUrl;
       }
 
       payload.videoUrl = videoUrl;
 
-      // Lưu poster nếu có chụp từ video
+      // Lưu poster
       if (capturedPoster?.blob) {
         try {
           payload.poster = await blobToDataURL(capturedPoster.blob);
-          payload.palette = undefined; // Không dùng palette SVG nữa
+          payload.palette = undefined;
         } catch (err) {
           console.warn("Không thể lưu poster:", err);
         }
       } else if (editingId != null && currentMovie?.poster && !currentMovie.poster.startsWith("assets/")) {
-        payload.poster = currentMovie.poster; // Giữ poster cũ
+        payload.poster = currentMovie.poster;
       }
 
       if (type === "series") {
-        const eps = $("#af-seasons").value.split(",").map(s => Number(s.trim())).filter(n => n > 0);
+        const eps = getVal("#af-seasons", "8").split(",").map(s => Number(s.trim())).filter(n => n > 0);
         payload.seasons = (eps.length ? eps : [8]).map((n, i) => ({ season: i + 1, episodes: n }));
       } else {
         payload.seasons = undefined;
       }
 
-      if (editingId != null) {
-        MovieDB.update(editingId, payload);
-        UI.toast(`Đã cập nhật "${title}"`, "success");
-      } else {
-        MovieDB.add(payload);
-        UI.toast(`Đã thêm phim "${title}"`, "success");
+      try {
+        if (editingId != null) {
+          MovieDB.update(editingId, payload);
+          UI.toast(`Đã cập nhật "${title}"`, "success");
+        } else {
+          MovieDB.add(payload);
+          UI.toast(`Đã thêm phim "${title}"`, "success");
+        }
+      } catch (err) {
+        console.error("Lỗi lưu phim:", err);
+        UI.toast("Lỗi khi lưu phim. Vui lòng thử lại.", "error");
+        return;
       }
       editingId = null;
       renderTab("movies");
